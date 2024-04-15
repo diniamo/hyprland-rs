@@ -6,6 +6,7 @@ use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use std::env::{var, VarError};
 use std::hash::{Hash, Hasher};
+use std::str::FromStr;
 use std::{error, fmt, io};
 
 #[derive(Debug)]
@@ -19,6 +20,8 @@ pub enum HyprError {
     FromUtf8Error(std::string::FromUtf8Error),
     /// Dispatcher returned non `ok` value
     NotOkDispatch(String),
+    /// Failed to parse an integer
+    ParseError(<i32 as FromStr>::Err),
 }
 
 impl From<io::Error> for HyprError {
@@ -51,6 +54,7 @@ impl fmt::Display for HyprError {
                 Self::NotOkDispatch(msg) => format!(
                     "A dispatcher retrurned a non `ok`, value which is probably a error: {msg} was returned by it"
                 ),
+                Self::ParseError(err) => err.to_string(),
             }
         )
     }

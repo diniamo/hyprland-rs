@@ -289,6 +289,7 @@ pub(crate) struct Events {
     pub(crate) minimize_events: Closures<MinimizeEventData>,
     pub(crate) window_title_changed_events: Closures<Address>,
     pub(crate) screencast_events: Closures<ScreencastEventData>,
+    pub(crate) config_reloaded_events: Closures<EmptyEventData>,
 }
 
 #[allow(clippy::type_complexity)]
@@ -317,6 +318,7 @@ pub(crate) struct AsyncEvents {
     pub(crate) minimize_events: AsyncClosures<MinimizeEventData>,
     pub(crate) window_title_changed_events: AsyncClosures<Address>,
     pub(crate) screencast_events: AsyncClosures<ScreencastEventData>,
+    pub(crate) config_reloaded_events: AsyncClosures<EmptyEventData>,
 }
 
 /// Event data for renameworkspace event
@@ -570,6 +572,11 @@ pub struct WindowFloatEventData {
 unsafe impl Send for WindowFloatEventData {}
 #[allow(unsafe_code)]
 unsafe impl Sync for WindowFloatEventData {}
+
+/// This struct is for events that have no data
+#[derive(Debug, Clone, Copy)]
+pub struct EmptyEventData;
+
 /// This enum holds every event type
 #[derive(Debug, Clone)]
 pub(crate) enum Event {
@@ -599,6 +606,7 @@ pub(crate) enum Event {
     Minimize(MinimizeEventData),
     WindowTitleChanged(Address),
     Screencast(ScreencastEventData),
+    ConfigReloaded(EmptyEventData),
 }
 
 fn check_for_regex_error(val: Result<Regex, RegexError>) -> Regex {
@@ -671,6 +679,7 @@ enum ParsedEventType {
     Minimize,
     WindowTitleChanged,
     Screencast,
+    ConfigReloaded,
     Unknown,
 }
 
@@ -771,6 +780,7 @@ pub(crate) fn event_parser(event: String) -> crate::Result<Vec<Event>> {
                 ParsedEventType::WindowTitleChanged,
                 r"windowtitle>>(?P<address>.*)"
             ),
+            (ParsedEventType::ConfigReloaded, r"configreloaded>>"),
             (ParsedEventType::Unknown, r"(?P<Event>^[^>]*)"),
         ]
         .into_iter()
@@ -847,9 +857,7 @@ pub(crate) fn event_parser(event: String) -> crate::Result<Vec<Event>> {
                 let id = &captures["id"];
                 let name = &captures["name"];
                 events.push(Event::WorkspaceRename(WorkspaceRenameEventData {
-                    workspace_id: id
-                        .parse::<WorkspaceId>()
-                        .map_err(|e| HyprError::IoError(std::io::Error::other(e)))?,
+                    workspace_id: id.parse::<WorkspaceId>().map_err(HyprError::ParseError)?,
                     workspace_name: name.to_string(),
                 }));
             }
@@ -984,6 +992,7 @@ pub(crate) fn event_parser(event: String) -> crate::Result<Vec<Event>> {
                 let addr = format_event_addr(&captures["address"]);
                 events.push(Event::WindowTitleChanged(Address::new(addr)));
             }
+            ParsedEventType::ConfigReloaded => events.push(Event::ConfigReloaded(EmptyEventData)),
             ParsedEventType::Unknown => {
                 #[cfg(not(feature = "silent"))]
                 match &captures.name("event") {
