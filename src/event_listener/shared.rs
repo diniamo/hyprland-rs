@@ -287,6 +287,7 @@ pub(crate) struct Events {
     pub(crate) minimize_events: Closures<MinimizeEventData>,
     pub(crate) window_title_changed_events: Closures<Address>,
     pub(crate) screencast_events: Closures<ScreencastEventData>,
+    pub(crate) config_reloaded_events: Closures<()>,
 }
 
 #[allow(clippy::type_complexity)]
@@ -313,6 +314,7 @@ pub(crate) struct AsyncEvents {
     pub(crate) minimize_events: AsyncClosures<MinimizeEventData>,
     pub(crate) window_title_changed_events: AsyncClosures<Address>,
     pub(crate) screencast_events: AsyncClosures<ScreencastEventData>,
+    pub(crate) config_reloaded_events: AsyncClosures<()>,
 }
 
 /// Event data for renameworkspace event
@@ -592,6 +594,7 @@ pub(crate) enum Event {
     Minimize(MinimizeEventData),
     WindowTitleChanged(Address),
     Screencast(ScreencastEventData),
+    ConfigReloaded,
 }
 
 fn check_for_regex_error(val: Result<Regex, RegexError>) -> Regex {
@@ -663,6 +666,7 @@ enum ParsedEventType {
     Minimize,
     WindowTitleChanged,
     Screencast,
+    ConfigReloaded,
     Unknown,
 }
 
@@ -759,7 +763,14 @@ pub(crate) fn event_parser(event: String) -> crate::Result<Vec<Event>> {
                 ParsedEventType::WindowTitleChanged,
                 r"windowtitle>>(?P<address>.*)"
             ),
-            (ParsedEventType::Unknown, r"(?P<Event>^[^>]*)"),
+            (
+                ParsedEventType::ConfigReloaded,
+                r"configreloaded>>"
+            ),
+            (
+                ParsedEventType::Unknown,
+                r"(?P<Event>^[^>]*)"
+            ),
         ]
         .into_iter()
         .map(|(e, r)| (e, check_for_regex_error(Regex::new(r))))
