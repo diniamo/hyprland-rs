@@ -86,6 +86,8 @@ impl HasExecutor for EventListener {
                 mut_arm_sync!(addr, window_title_changed_events, self)
             }
             Event::Screencast(data) => mut_arm_sync!(data, screencast_events, self),
+            Event::SpecialRemoved(monitor) => mut_arm_sync!(monitor, special_removed_events, self),
+            Event::ChangedSpecial(data) => mut_arm_sync!(data, special_changed_events, self),
             Event::ConfigReloaded(empty) => mut_arm_sync!(empty, config_reloaded_events, self),
         }
         Ok(())
@@ -172,6 +174,8 @@ impl EventListener {
             Event::Minimize(data) => mut_arm!(data, minimize_events, self),
             Event::Screencast(data) => mut_arm!(data, screencast_events, self),
             Event::WindowTitleChanged(addr) => mut_arm!(addr, window_title_changed_events, self),
+            Event::SpecialRemoved(monitor) => mut_arm!(monitor, special_removed_events, self),
+            Event::ChangedSpecial(data) => mut_arm!(data, special_changed_events, self),
             Event::ConfigReloaded(empty) => mut_arm!(empty, config_reloaded_events, self),
         }
         Ok(())

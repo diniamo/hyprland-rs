@@ -66,6 +66,8 @@ impl HasAsyncExecutor for AsyncEventListener {
             Event::Minimize(data) => arm_async!(data, minimize_events, self),
             Event::WindowTitleChanged(addr) => arm_async!(addr, window_title_changed_events, self),
             Event::Screencast(data) => arm_async!(data, screencast_events, self),
+            Event::SpecialRemoved(monitor) => arm_async!(monitor, special_removed_events, self),
+            Event::ChangedSpecial(data) => arm_async!(data, special_changed_events, self),
             Event::ConfigReloaded(empty) => arm_async!(empty, config_reloaded_events, self),
         }
         Ok(())
